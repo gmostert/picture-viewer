@@ -1,24 +1,26 @@
 {
-    "name": "photo-viewer",
-    "version": "0.0.1",
-    "author": {
-        "name": "Gerhard Mostert",
-        "email": "metalhead.it@gmail.com"
-    },
-    "description": "A basic photo viewer applicaion. It allows users to point to folders that contains pictures and then indexes the entire library. Each indexed pictures is saved in a db with user defined tags for easy search/browsing",
-    "config": {
-        "targetdir": "dist"
-    },
-    "main": "server.js",
-    "repository": {
-        "type": "git", 
-        "url": ""
-    },
-    "devDependencies": {
-        "express": "~4.5.1",
-        "mongoose": "~3.8.0",
-        "body-parser": "~1.4.2",
-        "method-override": "~2.0.2"
-    },
-    "license" : "MIT License"
+  "name": "photo-viewer",
+  "version": "0.0.1",
+  "author": {
+    "name": "Gerhard Mostert",
+    "email": "metalhead.it@gmail.com"
+  },
+  "description": "A basic photo viewer applicaion. It allows users to point to folders that contains pictures and then indexes the entire library. Each indexed pictures is saved in a db with user defined tags for easy search/browsing",
+  "config": {
+    "targetdir": "dist"
+  },
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "express": "~4.5.1",
+    "mongoose": "~3.8.0",
+    "body-parser": "~1.4.2",
+    "method-override": "~2.0.2",
+    "node-dir": "~0.1.10",
+    "binaryjs": "~0.2.1"
+  },
+  "license": "MIT License"
 }

@@ -1,10 +1,13 @@
 var dir = require('node-dir');
+var BinaryServer = require('binaryjs').BinaryServer;
+var fs = require('fs');
 var Picture = require('./models/picture');
 
 module.exports = function (express) {
+    var router = express.Router(); // get an instance of the express Router
+
     // ROUTES FOR OUR API
     // =============================================================================
-    var router = express.Router(); // get an instance of the express Router
 
     // middleware to use for all requests
     router.use(function (req, res, next) {
@@ -13,24 +16,44 @@ module.exports = function (express) {
         next(); // make sure we go to the next routes and don't stop here
     });
 
-    // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
-    router.get('/', function (req, res) {
-        res.sendfile('./public/views/index.html'); // load our public/index.html file
-    });
-
     // on routes that end in /pictures
     // ----------------------------------------------------
     router.route('/pictures')
-        // get all the pictures (accessed at GET http://localhost:8080/api/pictures)
+        // get all the pictures (accessed at GET http://localhost:8080/pictures)
         .get(function (req, res) {
             Picture.find(function (err, pictures) {
                 if (err)
-                    res.send(err);
+                    throw err;
 
+                var paths = new Array();
+                for (var i = 0, len = pictures.length; i < len; i++) {
+                    paths.push(pictures[i].path);
+                }
+                console.log('IMAGE PATHS = ' + paths);
+                
+                // Start Binary.js server
+                var server = BinaryServer({
+                    port: 9050
+                });
+                // Wait for new user connections
+                server.on('connection', function (client) {
+                    console.log('CONNECTED');
+                    // Stream picture to client
+//                    client.on('stream', function (stream, meta) {
+//                        console.log('STREAM');
+//                        console.log('META = ' + meta);
+                        for (var i = 0, len = paths.length; i < len; i++) {
+                            var file = fs.createReadStream(paths[i]);
+                            client.send(file);
+                        };
+                        
+//                    });
+                });
+                
                 res.json(pictures);
             });
         })
-        // add the picture (accessed at POST http://localhost:8080/api/pictures)
+        // add the picture (accessed at POST http://localhost:8080/pictures)
         .post(function (req, res) {
             var picture = new Picture(); // create a new instance of the Picture model
             picture.name = req.body.name;
@@ -47,7 +70,7 @@ module.exports = function (express) {
             });
         })
         .put(function (req, res) {
-            // update the picture with this id (accessed at PUT http://localhost:8080/api/pictures/:id)
+            // update the picture with this id (accessed at PUT http://localhost:8080/pictures/:id)
             Picture.findById(req.params.id, function (err, picture) {
                 if (err)
                     res.send(err);
@@ -68,16 +91,16 @@ module.exports = function (express) {
     // on routes that end in /upload
     // ----------------------------------------------------
     router.route('/upload')
-        // add all the pictures in the specifeid folder (accessed at POST http://localhost:8080/api/upload)
+        // add all the pictures in the specifeid folder (accessed at POST http://localhost:8080/upload)
         .post(function (req, res) {
             // Asynchronously iterate the files of a directory and its subdirectories and pass an array of file paths to a callback.
             dir.files(req.body.path, function (err, files) {
-                if (err) 
+                if (err)
                     res.send(err);
-                
+
                 for (var i = 0, len = files.length; i < len; i++) {
                     var file = files[i];
-                    
+
                     var picture = new Picture();
                     picture.name = file.substring(file.lastIndexOf('\\') + 1, file.lastIndexOf('.'));
                     picture.path = file;
@@ -88,12 +111,20 @@ module.exports = function (express) {
                             res.send(err);
                     });
                 }
-                
+
                 res.json({
                     message: 'Pictures added!'
                 });
             });
         });
+
+    // FRONTED ROUTES
+    // =============================================================================
+
+    // route to handle all angular requests (accessed at GET http://localhost:8080/picture-viewer)
+    router.get('/picture-viewer', function (req, res) {
+        res.sendfile('./public/index.html'); // load our public/index.html file
+    });
 
     return router;
 };

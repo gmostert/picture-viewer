@@ -1,17 +1,17 @@
-angular.module('appRoutes', []).config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
+angular.module('appRoutes').config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
 
     $routeProvider
 
     // home page
-        .when('/', {
+    .when('/', {
         templateUrl: 'views/home.html',
-        controller: 'MainController'
+        controller: 'HomeCtrl'
     })
 
-    // nerds page that will use the NerdController
-    .when('/nerds', {
-        templateUrl: 'views/nerd.html',
-        controller: 'NerdController'
+    // pictures page
+    .when('/view', {
+        templateUrl: 'views/picture.html',
+        controller: 'PictureCtrl'
     });
 
     $locationProvider.html5Mode(true);
