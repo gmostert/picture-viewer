@@ -6,5 +6,6 @@ angular.module('pictureApp', [
     'ngRoute', 
     'appRoutes', 
     'appCtrls', 
-    'appServices'
+    'appServices',
+    'crymis-bandGallery'
 ]);

@@ -35,19 +35,27 @@ module.exports = function (express) {
                 var server = BinaryServer({
                     port: 9050
                 });
+
                 // Wait for new user connections
                 server.on('connection', function (client) {
-                    console.log('CONNECTED');
-                    // Stream picture to client
-//                    client.on('stream', function (stream, meta) {
-//                        console.log('STREAM');
-//                        console.log('META = ' + meta);
-                        for (var i = 0, len = paths.length; i < len; i++) {
-                            var file = fs.createReadStream(paths[i]);
-                            client.send(file);
-                        };
-                        
-//                    });
+                    console.log('CLIENT CONNECTED!');
+                    var filesSend = 0;
+                    for (var i = 0, len = paths.length; i < len; i++) {
+                        var file = fs.createReadStream(paths[i]);
+                        console.log('STREAM FILE ' + (i + 1));
+                        client.send(file, [filesSend]);
+                        filesSend++;
+                    };
+
+                    client.on('stream', function (stream, meta) {
+                        stream.on('data', function (filesReceived) {
+                            console.log("CLIENT RECEVED " + filesReceived);
+                            if (filesSend == filesReceived) {
+                                console.log("CLOSE CONNECTION!");
+                                client.close();
+                            }
+                        });
+                    });
                 });
                 
                 res.json(pictures);
