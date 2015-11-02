@@ -76,8 +76,8 @@ module.exports = function (express) {
                 });
             });
         })
+        // update the picture with this id (accessed at PUT http://localhost:8080/pictures/:id)
         .put(function (req, res) {
-            // update the picture with this id (accessed at PUT http://localhost:8080/pictures/:id)
             Picture.findById(req.params.id, function (err, picture) {
                 if (err)
                     res.send(err);
@@ -98,7 +98,7 @@ module.exports = function (express) {
     // on routes that end in /upload
     // ----------------------------------------------------
     router.route('/upload')
-        // add all the pictures in the specifeid folder (accessed at POST http://localhost:8080/upload)
+        // add all the pictures in the specified folder (accessed at POST http://localhost:8080/upload)
         // params: path=absolute-path-to-folder-containing-images&tags=tag1&tags=tag2
         .post(function (req, res) {
             // Asynchronously iterate the files of a directory and pass an array of file paths to a callback.
@@ -116,20 +116,45 @@ module.exports = function (express) {
 
                     if (imageTypes.indexOf(file.substring(fileExtentionStart, file.length).toLocaleLowerCase()) !== -1) {
                         picture = new Picture();
-                        picture.name = file.substring(fileNameStart, fileExtentionStart - 1);
-                        picture.path = file;
+                        picture.name = file.substring(fileNameStart, file.length);
+                        picture.path = file.substring(0, fileNameStart);
                         picture.tags = req.body.tags;
 
                         picture.save(function (err, pic) {
                             if (err)
                                 res.send(err);
-                            console.log("IMAGE ADDED: " + pic);
+                            console.log("PICTURE ADDED: " + pic);
                         });
                     }
                 }
 
                 res.json({
-                    message: 'All pictures added!'
+                    message: 'All pictures added from: ' + req.body.path
+                });
+            });
+        })
+        // delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
+        .delete(function (req, res) {
+            dir.files(req.body.path, 'file', function (err, files) {
+                if (err)
+                    res.send(err);
+
+                var path = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
+
+                Picture
+                .where('path', path)
+                .exec(function (err, docs) {
+                    if (err)
+                        res.send(err);
+
+                    docs.forEach( function (doc) {
+                        doc.remove();
+                        console.log("PICTURE REMOVED: " + doc);
+                    });
+
+                    res.json({
+                        message: 'All pictures removed from: ' + req.body.path
+                    });
                 });
             });
         });
