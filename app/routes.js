@@ -29,7 +29,6 @@ module.exports = function (express) {
                 for (var i = 0, len = pictures.length; i < len; i++) {
                     paths.push(pictures[i].path);
                 }
-                console.log('IMAGE PATHS = ' + paths);
                 
                 // Start Binary.js server
                 var server = BinaryServer({
@@ -100,28 +99,37 @@ module.exports = function (express) {
     // ----------------------------------------------------
     router.route('/upload')
         // add all the pictures in the specifeid folder (accessed at POST http://localhost:8080/upload)
+        // params: path=absolute-path-to-folder-containing-images&tags=tag1&tags=tag2
         .post(function (req, res) {
-            // Asynchronously iterate the files of a directory and its subdirectories and pass an array of file paths to a callback.
-            dir.files(req.body.path, function (err, files) {
+            // Asynchronously iterate the files of a directory and pass an array of file paths to a callback.
+            dir.files(req.body.path, 'file', function (err, files) {
                 if (err)
                     res.send(err);
 
+                var imageTypes = ['jpg', 'jpeg', 'gif', 'tiff', 'bmp', 'png'];
+                var picture, file, fileNameStart, fileExtentionStart;
+
                 for (var i = 0, len = files.length; i < len; i++) {
-                    var file = files[i];
+                    file = files[i];
+                    fileNameStart = file.lastIndexOf('\\') + 1;
+                    fileExtentionStart = file.lastIndexOf('.') + 1;
 
-                    var picture = new Picture();
-                    picture.name = file.substring(file.lastIndexOf('\\') + 1, file.lastIndexOf('.'));
-                    picture.path = file;
-                    picture.tags = req.body.tags;
+                    if (imageTypes.indexOf(file.substring(fileExtentionStart, file.length).toLocaleLowerCase()) !== -1) {
+                        picture = new Picture();
+                        picture.name = file.substring(fileNameStart, fileExtentionStart - 1);
+                        picture.path = file;
+                        picture.tags = req.body.tags;
 
-                    picture.save(function (err, pic) {
-                        if (err)
-                            res.send(err);
-                    });
+                        picture.save(function (err, pic) {
+                            if (err)
+                                res.send(err);
+                            console.log("IMAGE ADDED: " + pic);
+                        });
+                    }
                 }
 
                 res.json({
-                    message: 'Pictures added!'
+                    message: 'All pictures added!'
                 });
             });
         });
