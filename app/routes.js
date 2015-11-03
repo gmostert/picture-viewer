@@ -1,7 +1,8 @@
+var fs = require('fs');
 var dir = require('node-dir');
 var BinaryServer = require('binaryjs').BinaryServer;
-var fs = require('fs');
 var Picture = require('./models/picture');
+var Tag = require('./models/tag');
 
 module.exports = function (express) {
     var router = express.Router(); // get an instance of the express Router
@@ -15,6 +16,25 @@ module.exports = function (express) {
             console.log(err);
             throw err;
         }
+    };
+
+    function updateTags(tags) {
+        Tag.find(function (err, allTags) {
+            errorHandler(err);
+
+            var tagObject;
+            tags.forEach(function (tag) {
+                if (allTags.indexOf(tag) < 0) {
+                    tagObject = new Tag();
+                    tagObject.name = tag;
+
+                    tagObject.save(function (err, savedTag) {
+                        errorHandler(err);
+                        console.log("TAG ADDED: " + savedTag);
+                    });
+                }
+            });
+        });
     };
 
     // ROUTES FOR OUR API
@@ -96,6 +116,8 @@ module.exports = function (express) {
                     }
                 }
 
+                updateTags(tags);
+
                 res.json({
                     message: 'All pictures added from: ' + folder
                 });
@@ -145,6 +167,16 @@ module.exports = function (express) {
             });
         });
 
+    // on routes that end in /tags
+    // ----------------------------------------------------
+    router.route('/tags')
+        // Get all the tags (accessed at GET http://localhost:8080/tags)
+        .get(function (req, res) {
+            Tag.find(function (err, tags) {
+                errorHandler(err);
+                res.json(tags);
+            });
+        })
 
     // FRONTED ROUTES
     // =============================================================================
