@@ -10,6 +10,13 @@ module.exports = function (express) {
         port: 9050
     });
 
+    function errorHandler(err) {
+        if (err) {
+            console.log(err);
+            throw err;
+        }
+    };
+
     // ROUTES FOR OUR API
     // =============================================================================
 
@@ -32,10 +39,7 @@ module.exports = function (express) {
             };
 
             Picture.find(query, function (err, pictures) {
-                if (err) {
-                    console.log(err);
-                    throw err;
-                }
+                errorHandler(err);
 
                 // Wait for new user connections
                 server.on('connection', function (client) {
@@ -69,10 +73,7 @@ module.exports = function (express) {
             var folder = req.param('folder');
             var tags = req.param('tags');
             dir.files(folder, 'file', function (err, files) {
-                if (err) {
-                    console.log(err);
-                    throw err;
-                }
+                errorHandler(err);
 
                 var imageTypes = ['jpg', 'jpeg', 'gif', 'tiff', 'bmp', 'png'];
                 var picture, file, fileNameStart, fileExtentionStart;
@@ -89,10 +90,7 @@ module.exports = function (express) {
                         picture.tags = tags;
 
                         picture.save(function (err, pic) {
-                             if (err) {
-                                console.log(err);
-                                throw err;
-                            }
+                            errorHandler(err);
                             console.log("PICTURE ADDED: " + pic);
                         });
                     }
@@ -109,10 +107,7 @@ module.exports = function (express) {
             var folder = req.param('folder');
             var tags = req.param('tags');
             dir.files(folder, function (err, files) {
-                if (err) {
-                    console.log(err);
-                    throw err;
-                }
+                errorHandler(err);
 
                 var conditions = {path: files[0].substring(0, files[0].lastIndexOf('\\') + 1)}
                 var update = {tags: tags}
@@ -130,19 +125,13 @@ module.exports = function (express) {
         .delete(function (req, res) {
             var folder = req.param('folder');
             dir.files(folder, function (err, files) {
-                if (err) {
-                    console.log(err);
-                    throw err;
-                }
+                errorHandler(err);
 
                 var path = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
                 var query = {'path': path};
 
                 Picture.find(query, function (err, pictures) {
-                    if (err) {
-                        console.log(err);
-                        throw err;
-                    }
+                    errorHandler(err);
 
                     pictures.forEach(function (pic) {
                         pic.remove();
