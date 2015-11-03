@@ -22,12 +22,9 @@ module.exports = function (express) {
         // get all the pictures (accessed at GET http://localhost:8080/pictures)
         .get(function (req, res) {
             Picture.find(function (err, pictures) {
-                if (err)
+                if (err) {
+                    console.log(err);
                     throw err;
-
-                var paths = new Array();
-                for (var i = 0, len = pictures.length; i < len; i++) {
-                    paths.push(pictures[i].path);
                 }
                 
                 // Start Binary.js server
@@ -39,9 +36,9 @@ module.exports = function (express) {
                 server.on('connection', function (client) {
                     console.log('CLIENT CONNECTED!');
                     var filesSend = 0;
-                    for (var i = 0, len = paths.length; i < len; i++) {
-                        var file = fs.createReadStream(paths[i]);
-                        console.log('STREAM FILE ' + (i + 1));
+                    for (var i = 0, len = pictures.length; i < len; i++) {
+                        var file = fs.createReadStream(pictures[i].path + pictures[i].name);
+                        console.log('STREAM FILE ' + pictures[i].name);
                         client.send(file, [filesSend]);
                         filesSend++;
                     };
@@ -68,8 +65,10 @@ module.exports = function (express) {
             picture.tags = req.body.tags;
 
             picture.save(function (err) {
-                if (err)
-                    res.send(err);
+                if (err) {
+                    console.log(err);
+                    throw err;
+                }
 
                 res.json({
                     message: 'Picture added!'
@@ -103,8 +102,10 @@ module.exports = function (express) {
         .post(function (req, res) {
             // Asynchronously iterate the files of a directory and pass an array of file paths to a callback.
             dir.files(req.body.path, 'file', function (err, files) {
-                if (err)
-                    res.send(err);
+                if (err) {
+                    console.log(err);
+                    throw err;
+                }
 
                 var imageTypes = ['jpg', 'jpeg', 'gif', 'tiff', 'bmp', 'png'];
                 var picture, file, fileNameStart, fileExtentionStart;
@@ -136,16 +137,20 @@ module.exports = function (express) {
         // delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
         .delete(function (req, res) {
             dir.files(req.body.path, 'file', function (err, files) {
-                if (err)
-                    res.send(err);
+                if (err) {
+                    console.log(err);
+                    throw err;
+                }
 
                 var path = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
 
                 Picture
                 .where('path', path)
                 .exec(function (err, docs) {
-                    if (err)
-                        res.send(err);
+                    if (err) {
+                        console.log(err);
+                        throw err;
+                    }
 
                     docs.forEach( function (doc) {
                         doc.remove();
