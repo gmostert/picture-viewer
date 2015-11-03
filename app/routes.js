@@ -5,6 +5,10 @@ var Picture = require('./models/picture');
 
 module.exports = function (express) {
     var router = express.Router(); // get an instance of the express Router
+    // Start Binary.js server
+    var server = BinaryServer({
+        port: 9050
+    });
 
     // ROUTES FOR OUR API
     // =============================================================================
@@ -22,16 +26,16 @@ module.exports = function (express) {
         // Get all the pictures (accessed at GET http://localhost:8080/pictures)
         // Params: ?tags=tag1&tags=tag2
         .get(function (req, res) {
-            Picture.find(function (err, pictures) {
+            var tags = req.param('tags');
+            var query = {
+                tags: tags
+            };
+
+            Picture.find(query, function (err, pictures) {
                 if (err) {
                     console.log(err);
                     throw err;
                 }
-                
-                // Start Binary.js server
-                var server = BinaryServer({
-                    port: 9050
-                });
 
                 // Wait for new user connections
                 server.on('connection', function (client) {
@@ -46,7 +50,7 @@ module.exports = function (express) {
 
                     client.on('stream', function (stream, meta) {
                         stream.on('data', function (filesReceived) {
-                            console.log("CLIENT RECEVED " + filesReceived);
+                            console.log("CLIENT RECIEVED " + filesReceived);
                             if (filesSend == filesReceived) {
                                 console.log("CLOSE CONNECTION!");
                                 client.close();
@@ -85,8 +89,10 @@ module.exports = function (express) {
                         picture.tags = tags;
 
                         picture.save(function (err, pic) {
-                            if (err)
-                                res.send(err);
+                             if (err) {
+                                console.log(err);
+                                throw err;
+                            }
                             console.log("PICTURE ADDED: " + pic);
                         });
                     }
@@ -108,15 +114,9 @@ module.exports = function (express) {
                     throw err;
                 }
 
-                var conditions = {
-                    path: files[0].substring(0, files[0].lastIndexOf('\\') + 1)
-                }
-                var update = {
-                    tags: tags
-                }
-                var options = {
-                    multi: true
-                };
+                var conditions = {path: files[0].substring(0, files[0].lastIndexOf('\\') + 1)}
+                var update = {tags: tags}
+                var options = {multi: true};
 
                 Picture.update(conditions, update, options, function (err, numAffected) {
                     res.json({
@@ -136,18 +136,17 @@ module.exports = function (express) {
                 }
 
                 var path = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
+                var query = {'path': path};
 
-                Picture
-                .where('path', path)
-                .exec(function (err, docs) {
+                Picture.find(query, function (err, pictures) {
                     if (err) {
                         console.log(err);
                         throw err;
                     }
 
-                    docs.forEach(function (doc) {
-                        doc.remove();
-                        console.log("PICTURE REMOVED: " + doc);
+                    pictures.forEach(function (pic) {
+                        pic.remove();
+                        console.log("PICTURE REMOVED: " + pic);
                     });
 
                     res.json({
