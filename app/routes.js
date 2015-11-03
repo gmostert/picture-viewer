@@ -172,7 +172,10 @@ module.exports = function (express) {
     router.route('/tags')
         // Get all the tags (accessed at GET http://localhost:8080/tags)
         .get(function (req, res) {
-            Tag.find(function (err, tags) {
+            Tag
+            .find({})
+            .select({"name": 1, "_id": 0})
+            .exec(function (err, tags) {
                 errorHandler(err);
                 res.json(tags);
             });

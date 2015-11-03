@@ -2,12 +2,15 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
 
     return {
         // call to get all nerds
-        getImages: function () {
+        getImages: function (tags) {
             var defer = $q.defer();
             
             $http({
                 method: 'GET',
-                url: '/pictures'
+                url: '/pictures',
+                params: {
+                    tags: JSON.stringify(tags)
+                }
             }).then(function successCallback(response) {
                 var images = new Array();
                 // Connect to Binary.js server
@@ -40,18 +43,6 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
             });
             
             return defer.promise;
-        },
-
-
-        // these will work when more API routes are defined on the Node side of things
-        // call to POST and create a new nerd
-        create: function (nerdData) {
-            return $http.post('/api/nerds', nerdData);
-        },
-
-        // call to DELETE a nerd
-        delete: function (id) {
-            return $http.delete('/api/nerds/' + id);
         }
     }
 
