@@ -19,7 +19,7 @@ module.exports = function (express) {
     // on routes that end in /pictures
     // ----------------------------------------------------
     router.route('/pictures')
-        // get all the pictures (accessed at GET http://localhost:8080/pictures)
+        // Get all the pictures (accessed at GET http://localhost:8080/pictures)
         // Params: ?tags=tag1&tags=tag2
         .get(function (req, res) {
             Picture.find(function (err, pictures) {
@@ -97,10 +97,33 @@ module.exports = function (express) {
                 });
             });
         })
-        // Update the pictures meta data in tge specified folder (accessed at PUT http://localhost:8080/pictures)
+        // Update all the picture's meta data in the specified folder (accessed at PUT http://localhost:8080/pictures)
         // Params: ?folder=absolute-path-to-folder&tags=tag1&tags=tag2
         .put(function (req, res) {
             var folder = req.param('folder');
+            var tags = req.param('tags');
+            dir.files(folder, function (err, files) {
+                if (err) {
+                    console.log(err);
+                    throw err;
+                }
+
+                var conditions = {
+                    path: files[0].substring(0, files[0].lastIndexOf('\\') + 1)
+                }
+                var update = {
+                    tags: tags
+                }
+                var options = {
+                    multi: true
+                };
+
+                Picture.update(conditions, update, options, function (err, numAffected) {
+                    res.json({
+                        message: 'All pictures updated in: ' + folder
+                    });
+                });
+            });
         })
         // Delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
         // Params: ?folder=absolute-path-to-folder
@@ -122,7 +145,7 @@ module.exports = function (express) {
                         throw err;
                     }
 
-                    docs.forEach( function (doc) {
+                    docs.forEach(function (doc) {
                         doc.remove();
                         console.log("PICTURE REMOVED: " + doc);
                     });
