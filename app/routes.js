@@ -20,6 +20,7 @@ module.exports = function (express) {
     // ----------------------------------------------------
     router.route('/pictures')
         // get all the pictures (accessed at GET http://localhost:8080/pictures)
+        // Params: ?tags=tag1&tags=tag2
         .get(function (req, res) {
             Picture.find(function (err, pictures) {
                 if (err) {
@@ -57,51 +58,13 @@ module.exports = function (express) {
                 res.json(pictures);
             });
         })
-        // add the picture (accessed at POST http://localhost:8080/pictures)
-        .post(function (req, res) {
-            var picture = new Picture(); // create a new instance of the Picture model
-            picture.name = req.body.name;
-            picture.path = req.body.path;
-            picture.tags = req.body.tags;
-
-            picture.save(function (err) {
-                if (err) {
-                    console.log(err);
-                    throw err;
-                }
-
-                res.json({
-                    message: 'Picture added!'
-                });
-            });
-        })
-        // update the picture with this id (accessed at PUT http://localhost:8080/pictures/:id)
-        .put(function (req, res) {
-            Picture.findById(req.params.id, function (err, picture) {
-                if (err)
-                    res.send(err);
-
-                picture.tags = req.body.tags; // update tag info
-
-                picture.save(function (err) {
-                    if (err)
-                        res.send(err);
-
-                    res.json({
-                        message: 'Picture updated!'
-                    });
-                });
-            });
-        });
-
-    // on routes that end in /upload
-    // ----------------------------------------------------
-    router.route('/upload')
-        // add all the pictures in the specified folder (accessed at POST http://localhost:8080/upload)
-        // params: path=absolute-path-to-folder-containing-images&tags=tag1&tags=tag2
+        // Add all the pictures in the specified folder (accessed at POST http://localhost:8080/pictures)
+        // Params: ?folder=absolute-path-to-folder&tags=tag1&tags=tag2
         .post(function (req, res) {
             // Asynchronously iterate the files of a directory and pass an array of file paths to a callback.
-            dir.files(req.body.path, 'file', function (err, files) {
+            var folder = req.param('folder');
+            var tags = req.param('tags');
+            dir.files(folder, 'file', function (err, files) {
                 if (err) {
                     console.log(err);
                     throw err;
@@ -119,7 +82,7 @@ module.exports = function (express) {
                         picture = new Picture();
                         picture.name = file.substring(fileNameStart, file.length);
                         picture.path = file.substring(0, fileNameStart);
-                        picture.tags = req.body.tags;
+                        picture.tags = tags;
 
                         picture.save(function (err, pic) {
                             if (err)
@@ -130,13 +93,20 @@ module.exports = function (express) {
                 }
 
                 res.json({
-                    message: 'All pictures added from: ' + req.body.path
+                    message: 'All pictures added from: ' + folder
                 });
             });
         })
-        // delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
+        // Update the pictures meta data in tge specified folder (accessed at PUT http://localhost:8080/pictures)
+        // Params: ?folder=absolute-path-to-folder&tags=tag1&tags=tag2
+        .put(function (req, res) {
+            var folder = req.param('folder');
+        })
+        // Delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
+        // Params: ?folder=absolute-path-to-folder
         .delete(function (req, res) {
-            dir.files(req.body.path, 'file', function (err, files) {
+            var folder = req.param('folder');
+            dir.files(folder, function (err, files) {
                 if (err) {
                     console.log(err);
                     throw err;
@@ -158,11 +128,12 @@ module.exports = function (express) {
                     });
 
                     res.json({
-                        message: 'All pictures removed from: ' + req.body.path
+                        message: 'All pictures removed from: ' + folder
                     });
                 });
             });
         });
+
 
     // FRONTED ROUTES
     // =============================================================================
