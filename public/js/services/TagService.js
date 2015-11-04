@@ -9,7 +9,6 @@ angular.module('appServices').factory('TagService', ['$http', '$q', function ($h
                 method: 'GET',
                 url: '/tags'
             }).then(function successCallback(response) {
-                console.log(response);
                 defer.resolve(response.data);
             }, function errorCallback(response) {
                 // called asynchronously if an error occurs

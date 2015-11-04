@@ -9,7 +9,7 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
                 method: 'GET',
                 url: '/pictures',
                 params: {
-                    tags: JSON.stringify(tags)
+                    tags: tags
                 }
             }).then(function successCallback(response) {
                 var images = new Array();

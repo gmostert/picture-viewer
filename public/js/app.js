@@ -7,5 +7,6 @@ angular.module('pictureApp', [
     'appRoutes', 
     'appCtrls', 
     'appServices',
-    'crymis-bandGallery'
+    'crymis-bandGallery',
+    'checklist-model'
 ]);
