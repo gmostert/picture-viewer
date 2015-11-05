@@ -8,7 +8,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="libs/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css"> <!-- custom styles -->
-    <link rel="stylesheet" href="css/bandGallery.css">
+    <link rel="stylesheet" href="libs/ngGallery/src/css/ngGallery.css">
 
     <!-- JS -->
     <script src="libs/jquery/dist/jquery.min.js"></script>
@@ -17,7 +17,7 @@
     <script src="libs/binaryjs/dist/binary.min.js"></script>
     <script src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="libs/checklist-model/checklist-model.js"></script>
-    <script src="js/3rdparty/bandGallery.js"></script>
+    <script src="libs/ngGallery/src/js/ngGallery.js"></script>
     <script src="js/3rdparty/jquery-ui-easing.js"></script>
 
     <!-- ANGULAR CUSTOM -->
@@ -35,17 +35,17 @@
         <!--<div class="btn-group col-md-12" data-toggle="buttons">-->
         <div class="btn-group col-md-12">
             <label ng-repeat="tag in tags" class="btn btn-primary">
-                <input type="checkbox" autocomplete="off" checklist-model="selectedTags" checklist-value="tag.name"> {{tag.name}}
+                <input type="checkbox" autocomplete="off" checklist-model="selectedTags" checklist-value="tag.name" ng-disabled="loading"> {{tag.name}}
             </label>
         </div>
 
         <div class="">
-            <button ng-click="loadPictures()" type="button" id="loading-btn" data-loading-text="Loading..." class="btn btn-primary" autocomplete="off">
+            <button id="loadButton" ng-click="loadPictures()" type="button" id="loading-btn" data-loading-text="Loading..." class="btn btn-primary" autocomplete="off">
                 Load
             </button>
         </div>
 
-        <band-gallery ng-if="pictures" gallery-imgs='pictures' nav-top-btn="true" nav-down-btn="true" page-nr="true"></band-gallery>
+        <ng-gallery images="pictures"></ng-gallery>
 
         <!-- ANGULAR DYNAMIC CONTENT -->
         <div ng-view></div>

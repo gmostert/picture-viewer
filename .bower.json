@@ -8,6 +8,7 @@
         "angular": "latest",
         "angular-route": "latest",
         "binaryjs": "latest",
-        "checklist-model": "latest"
+        "checklist-model": "latest",
+        "ngGallery": "latest"
     }
 }
