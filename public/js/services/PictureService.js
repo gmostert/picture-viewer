@@ -17,7 +17,7 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
                 var client = new BinaryClient('ws://localhost:9050');
                 // Received new stream from server!
                 client.on('stream', function (stream, meta) {
-                    console.log('STREAM');
+//                    console.log('STREAM');
                     var parts = [];
 
                     stream.on('data', function (data) {
