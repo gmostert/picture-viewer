@@ -58,24 +58,47 @@ module.exports = function (express) {
                 tags: tags
             };
 
+            function sendFileToClient(file, client) {
+                var fileStream = fs.createReadStream(file.path + file.name);
+                console.log('STREAM FILE ' + file._id);
+                client.send(fileStream, [file._id + ""]); // Stream file along with its id as meta data
+            }
+
+            function removeReceivedFile(fileReceived, pictures) {
+                var picture;
+                for (var i = 0, len = pictures.length; i < len; i++) {
+                    picture = pictures[i];
+                    if (picture._id == fileReceived) {
+                        pictures.splice(i, 1);
+                        break;
+                    }
+                }
+                return pictures;
+            }
+
+//            pictures = [{
+//                _id: 563c649a8ea3c65c0eae008b,
+//                path: 'C:\\Users\\Public\\Pictures\\Sample Pictures\\',
+//                name: 'Lighthouse.jpg',
+//                __v: 0,
+//                tags: [ 'tag1', 'tag2' ]
+//            }]
             Picture.find(query, function (err, pictures) {
                 errorHandler(err);
 
                 // Wait for new user connections
                 server.on('connection', function (client) {
-                    console.log('CLIENT CONNECTED!');
-                    var filesSend = 0;
-                    for (var i = 0, len = pictures.length; i < len; i++) {
-                        var file = fs.createReadStream(pictures[i].path + pictures[i].name);
-                        console.log('STREAM FILE ' + pictures[i].name);
-                        client.send(file, [filesSend]);
-                        filesSend++;
-                    };
+                    if (pictures.length > 0) {
+                        sendFileToClient(pictures[0], client);
+                    }
 
                     client.on('stream', function (stream, meta) {
-                        stream.on('data', function (filesReceived) {
-                            console.log("CLIENT RECIEVED " + filesReceived);
-                            if (filesSend == filesReceived) {
+                        stream.on('data', function (data) { //data = ['563c649a8ea3c65c0eae008b']
+                            console.log("CLIENT RECIEVED " + data[0]);
+                            pictures = removeReceivedFile(data[0], pictures);
+                            if (pictures.length > 0) {
+                                sendFileToClient(pictures[0], client);
+                            } else {
                                 console.log("CLOSE CONNECTION!");
                                 client.close();
                             }

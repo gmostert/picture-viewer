@@ -1,5 +1,6 @@
 angular.module('appCtrls').controller('HomeCtrl', function ($scope, PictureService, TagService) {
     $scope.loading = false;
+    var pictures;
 
     TagService.getTags().then(function (tags) {
         tagModel = new Array();
@@ -21,18 +22,18 @@ angular.module('appCtrls').controller('HomeCtrl', function ($scope, PictureServi
         return selected;
     }
 
+    function pictureReceived(picture) { /* picture = {url: 'blob://http..'} */
+        pictures.push({thumb: picture.url, img: picture.url});
+        $scope.pictures = pictures;
+        $scope.$apply();
+    }
+
     $scope.loadPictures = function() {
+        pictures = new Array();
         $scope.loading = true;
         $('#loadButton').button('loading');
 
-        PictureService.getImages(getSelectedTags()).then(function (pictures) { /* pictures = [{url: 'blob://http..'}] */
-//            console.log(pictures);
-            var images = new Array();
-            pictures.forEach(function(pic) {
-                images.push({thumb: pic.url, img: pic.url});
-            });
-
-            $scope.pictures = images;
+        PictureService.getImages(getSelectedTags(), pictureReceived).then(function () {
             $scope.loading = false;
             $('#loadButton').button('reset');
         });

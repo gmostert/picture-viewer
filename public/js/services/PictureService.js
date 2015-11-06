@@ -2,9 +2,13 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
 
     return {
         // call to get all nerds
-        getImages: function (tags) {
+        getImages: function (tags, callback) {
             var defer = $q.defer();
             
+            if (tags.length === 0) {
+                defer.resolve();
+            }
+
             $http({
                 method: 'GET',
                 url: '/pictures',
@@ -12,7 +16,6 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
                     tags: tags
                 }
             }).then(function successCallback(response) {
-                var images = new Array();
                 // Connect to Binary.js server
                 var client = new BinaryClient('ws://localhost:9050');
                 // Received new stream from server!
@@ -25,16 +28,16 @@ angular.module('appServices').factory('PictureService', ['$http', '$q', function
                     });
 
                     stream.on('end', function () {
-                        console.log('RECEIVED ' + meta);
-                        images.push({
-                            "url": (window.URL || window.webkitURL).createObjectURL(new Blob(parts))
-                        });
-                        // Tell server number of file received
-                        client.send(images.length);
+//                        console.log('RECEIVED ' + meta);
+                        // Notify server which file was received..
+                        client.send(meta);
+                        // Send caller the image that was received..
+                        callback({"url": (window.URL || window.webkitURL).createObjectURL(new Blob(parts))});
                     });
 
                     stream.on('close', function () {
-                        defer.resolve(images);
+                        // Notify caller streaming is done..
+                        defer.resolve();
                     });
                 });
             }, function errorCallback(response) {
