@@ -125,6 +125,7 @@ module.exports = function (express) {
             dir.files(folder, 'file', function (err, files) {
                 errorHandler(err);
 
+                var pictures = new Array();
                 var imageTypes = ['jpg', 'jpeg', 'gif', 'tiff', 'bmp', 'png'];
                 var picture, file, fileNameStart, fileExtentionStart;
 
@@ -138,13 +139,15 @@ module.exports = function (express) {
                         picture.name = file.substring(fileNameStart, file.length);
                         picture.folder = file.substring(0, fileNameStart);
                         picture.tags = tags;
-
-                        picture.save(function (err, pic) {
-                            errorHandler(err);
-                            console.log("PICTURE ADDED: " + pic);
-                        });
+                        pictures.push(picture);
                     }
                 }
+
+                console.log("ADD PICTURES " + pictures);
+                Picture.create(pictures, function (err) {
+                    errorHandler(err);
+                    console.log("ALL PICTURES ADDED!");
+                });
 
                 updateTags(tags);
 
