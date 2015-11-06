@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var PictureSchema = new Schema({
     name: String,
-    path: String,
+    folder: String,
     tags: Array
 });
 

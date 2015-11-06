@@ -22,9 +22,17 @@ module.exports = function (express) {
         Tag.find(function (err, allTags) {
             errorHandler(err);
 
-            var tagObject;
+            var tagObject, exists;
             tags.forEach(function (tag) {
-                if (allTags.indexOf(tag) < 0) {
+                exists = false;
+
+                allTags.forEach(function(existingTag) {
+                    if (tag == existingTag.name) {
+                        exists = true;
+                    }
+                });
+
+                if (!exists) {
                     tagObject = new Tag();
                     tagObject.name = tag;
 
@@ -54,12 +62,9 @@ module.exports = function (express) {
         // Params: ?tags=tag1&tags=tag2
         .get(function (req, res) {
             var tags = req.param('tags');
-            var query = {
-                tags: tags
-            };
 
             function sendFileToClient(file, client) {
-                var fileStream = fs.createReadStream(file.path + file.name);
+                var fileStream = fs.createReadStream(file.folder + file.name);
                 console.log('STREAM FILE ' + file._id);
                 client.send(fileStream, [file._id + ""]); // Stream file along with its id as meta data
             }
@@ -76,38 +81,40 @@ module.exports = function (express) {
                 return pictures;
             }
 
-//            pictures = [{
-//                _id: 563c649a8ea3c65c0eae008b,
-//                path: 'C:\\Users\\Public\\Pictures\\Sample Pictures\\',
-//                name: 'Lighthouse.jpg',
-//                __v: 0,
-//                tags: [ 'tag1', 'tag2' ]
-//            }]
-            Picture.find(query, function (err, pictures) {
-                errorHandler(err);
+            if (tags) {
+                var query = {tags: tags};
+                Picture.find(query, function (err, pictures) {
+                    // pictures = [{_id: 563c649a8ea3c65c0eae008b, folder: 'C:\\Users\\Public\\Pictures\\Sample Pictures\\', name: 'Lighthouse.jpg', __v: 0, tags: [ 'tag1', 'tag2' ] }]
+                    errorHandler(err);
 
-                // Wait for new user connections
-                server.on('connection', function (client) {
-                    if (pictures.length > 0) {
-                        sendFileToClient(pictures[0], client);
-                    }
+                    // Wait for new user connections
+                    server.on('connection', function (client) {
+                        if (pictures.length > 0) {
+                            sendFileToClient(pictures[0], client);
+                        }
 
-                    client.on('stream', function (stream, meta) {
-                        stream.on('data', function (data) { //data = ['563c649a8ea3c65c0eae008b']
-                            console.log("CLIENT RECIEVED " + data[0]);
-                            pictures = removeReceivedFile(data[0], pictures);
-                            if (pictures.length > 0) {
-                                sendFileToClient(pictures[0], client);
-                            } else {
-                                console.log("CLOSE CONNECTION!");
-                                client.close();
-                            }
+                        client.on('stream', function (stream, meta) {
+                            stream.on('data', function (data) { // data = ['563c649a8ea3c65c0eae008b']
+                                console.log("CLIENT RECIEVED " + data[0]);
+                                pictures = removeReceivedFile(data[0], pictures);
+                                if (pictures.length > 0) {
+                                    sendFileToClient(pictures[0], client);
+                                } else {
+                                    console.log("CLOSE CONNECTION!");
+                                    client.close();
+                                }
+                            });
                         });
                     });
+
+                    res.json(pictures);
                 });
-                
-                res.json(pictures);
-            });
+            } else {
+                 Picture.find(function (err, pictures) {
+                    errorHandler(err);
+                    res.json(pictures);
+                });
+            }
         })
         // Add all the pictures in the specified folder (accessed at POST http://localhost:8080/pictures)
         // Params: ?folder=absolute-path-to-folder&tags=tag1&tags=tag2
@@ -129,7 +136,7 @@ module.exports = function (express) {
                     if (imageTypes.indexOf(file.substring(fileExtentionStart, file.length).toLocaleLowerCase()) !== -1) {
                         picture = new Picture();
                         picture.name = file.substring(fileNameStart, file.length);
-                        picture.path = file.substring(0, fileNameStart);
+                        picture.folder = file.substring(0, fileNameStart);
                         picture.tags = tags;
 
                         picture.save(function (err, pic) {
@@ -154,7 +161,7 @@ module.exports = function (express) {
             dir.files(folder, function (err, files) {
                 errorHandler(err);
 
-                var conditions = {path: files[0].substring(0, files[0].lastIndexOf('\\') + 1)}
+                var conditions = {folder: files[0].substring(0, files[0].lastIndexOf('\\') + 1)}
                 var update = {tags: tags}
                 var options = {multi: true};
 
@@ -172,15 +179,17 @@ module.exports = function (express) {
             dir.files(folder, function (err, files) {
                 errorHandler(err);
 
-                var path = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
-                var query = {'path': path};
-
+                var folder = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
+                var query = {folder: folder};
+                console.log(folder);
                 Picture.find(query, function (err, pictures) {
                     errorHandler(err);
-
                     pictures.forEach(function (pic) {
-                        pic.remove();
-                        console.log("PICTURE REMOVED: " + pic);
+                        console.log("REMOVE PICTURE: " + pic);
+                        Picture.remove({_id: pic._id}, function(err) {
+                            errorHandler(err);
+                        });
+                        //TODO: remove tag if no other pictures uses it
                     });
 
                     res.json({
