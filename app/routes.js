@@ -23,7 +23,7 @@ module.exports = function (express) {
             errorHandler(err);
 
             var tagObject, exists;
-            tags.forEach(function (tag) {
+            function addTag(tag) {
                 exists = false;
 
                 allTags.forEach(function(existingTag) {
@@ -41,7 +41,15 @@ module.exports = function (express) {
                         console.log("TAG ADDED: " + savedTag);
                     });
                 }
-            });
+            }
+            
+            if (tags.constructor === Array) {
+                tags.forEach(function (tag) {
+                    addTag(tag);
+                });
+            } else {
+                addTag(tags);
+            }
         });
     };
 
@@ -175,31 +183,45 @@ module.exports = function (express) {
                 });
             });
         })
-        // Delete all the pictures in the specified folder (accessed at DELETE http://localhost:8080/upload)
+        // Remove all the pictures found in the specified folder or with specifed tags (accessed at DELETE http://localhost:8080/pictures)
         // Params: ?folder=absolute-path-to-folder
+        // Params: ?tags=tag1&tags=tag2
         .delete(function (req, res) {
-            var folder = req.param('folder');
-            dir.files(folder, function (err, files) {
-                errorHandler(err);
-
-                var folder = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
-                var query = {folder: folder};
-                console.log(folder);
+            function removePictures(query) {
                 Picture.find(query, function (err, pictures) {
-                    errorHandler(err);
-                    pictures.forEach(function (pic) {
-                        console.log("REMOVE PICTURE: " + pic);
-                        Picture.remove({_id: pic._id}, function(err) {
-                            errorHandler(err);
+                        errorHandler(err);
+                        pictures.forEach(function (pic) {
+                            console.log("REMOVE PICTURE: " + pic);
+                            Picture.remove({_id: pic._id}, function(err) {
+                                errorHandler(err);
+                            });
+                            //TODO: remove tag if no other pictures uses it
                         });
-                        //TODO: remove tag if no other pictures uses it
-                    });
 
-                    res.json({
-                        message: 'All pictures removed from: ' + folder
+                        res.json({
+                            message: 'ALL PICTURES REMOVED!'
+                        });
                     });
+            };
+        
+            var folder = req.param('folder');
+            var tags = req.param('tags');
+            
+            if (folder) {
+                dir.files(folder, function (err, files) {
+                    errorHandler(err);
+
+                    var folder = files[0].substring(0, files[0].lastIndexOf('\\') + 1);
+                    var query = {folder: folder};
+                    console.log('Remove pictures from folder: ' + folder);
+                    removePictures(query);
                 });
-            });
+            } else if (tags) {
+                var query = {tags: tags};
+                var tags = req.param('tags');
+                console.log('Remove pictures with tags: ' + tags);
+                removePictures(query);
+            }
         });
 
     // on routes that end in /tags
